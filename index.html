@@ -1,184 +1,275 @@
 <html ng-app="calculatorApp">
     <head>
         <title>cheb1n's asmodeum optimizer</title>
-        <style>
-            table, td, th {
-                border: 1px solid black;
-            }
-            table {
-                border-collapse: collapse;
-            }
-        </style>
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+        <!-- Angular -->
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
         <script>
+            var safeMin = (values) => {
+                const filteredValues = values.filter(value => !isNaN(value)).filter(value => value !== null);
+                if (filteredValues.length == 0) {
+                    return NaN;
+                }
+                return Math.min(...filteredValues);
+            }
             var calculatorApp = angular.module('calculatorApp', []);
             calculatorApp.controller('CalculatorController', function CalculatorController() {
-                /* inputs */
-                this.greenWood = 0.38;
-                this.sandFlux = 1.88;
-                this.shelldustFlux = 2.48;
-                this.obsidianFlux = 2.00;
-                this.ironOre = 0.32;
-                this.starmetalOre = 1.66;
-                this.orichalcumOre = 0.34;
-                this.tolviumAndCinnabar = 350;
+                /* charcoal calc */
+                this.charcoalCraft = () => 2 * this.greenWood / 1.20;
+                this.optimalCharcoal = () => safeMin([this.charcoalCraft(), this.charcoalBuy]);
+
+                /* iron calc */
+                this.ironIngotCraft = () => 4 * this.ironOre / 1.20;
+
+                /* steel calc */
+                this.optimalIron = () => safeMin([this.ironIngotBuy, this.ironIngotCraft()]);
+                this.steelIngotCraftBase = () => 3 * this.optimalIron() + 2 * this.optimalCharcoal();
+                this.steelIngotCrafts = () => [(this.steelIngotCraftBase() + this.sandFlux) / 1.18, (this.steelIngotCraftBase() + this.shelldustFlux) / 1.68, (this.steelIngotCraftBase() + this.obsidianFlux) / 1.93];
+                this.steelIngotCraftWithSandFlux = () => (this.steelIngotCraftBase() + this.sandFlux) / 1.18;
+                this.steelIngotCraftWithShelldustFlux = () => (this.steelIngotCraftBase() + this.shelldustFlux) / 1.68;
+                this.steelIngotCraftWithObsidianFlux = () => (this.steelIngotCraftBase() + this.obsidianFlux) / 1.93;
                 
-                this.charcoalBuy = 0.76;
-                this.ironIngotBuy = 2.00;
-                this.steelIngotBuy = 5.00;
-                this.starmetalIngotBuy = 17.00;
-                this.orichalcumIngotBuy = 34.00;
-                this.asmodeumIngotBuy = 872;
+                /* starmetal calc */
+                this.optimalSteel = () => safeMin([this.steelIngotBuy, this.steelIngotCraftWithSandFlux(), this.steelIngotCraftWithShelldustFlux(), this.steelIngotCraftWithObsidianFlux()]);
+                this.starmetalIngotCraftBase = () => 6 * this.starmetalOre + 2 * this.optimalSteel() + 2 * this.optimalCharcoal();
+                this.starmetalIngotCraftWithSandFlux = () => (this.starmetalIngotCraftBase() + this.sandFlux) / 1.1;
+                this.starmetalIngotCraftWithShelldustFlux = () => (this.starmetalIngotCraftBase() + this.shelldustFlux) / 1.15;
+                this.starmetalIngotCraftWithObsidianFlux = () => (this.starmetalIngotCraftBase() + this.obsidianFlux) / 1.4;
 
-                /* outputs */
-                this.charcoalCraft = () => this.greenWood * 2 / 1.20;
-                this.optimalCharcoal = () => Math.min(this.charcoalBuy, this.charcoalCraft());
+                /* silver calc */
+                this.silverIngotCraft = () => this.silverOre * 4 / 1.20;
 
-                this.ironIngotCraft = () => this.ironOre * 4 / 1.20;
-                this.optimalIron = () => Math.min(this.ironIngotBuy, this.ironIngotCraft());
-                this.steelIngotCraftWithSandFlux = () => (this.optimalIron() * 3 + this.optimalCharcoal() * 2 + this.sandFlux) / 1.18;
-                this.steelIngotCraftWithShelldustFlux = () => (this.optimalIron() * 3 + this.optimalCharcoal() * 2 + this.shelldustFlux) / 1.68;
-                this.steelIngotCraftWithObsidianFlux = () => (this.optimalIron() * 3 + this.optimalCharcoal() * 2 + this.obsidianFlux) / 1.93;
+                /* gold calc */
+                this.optimalSilver = () => safeMin([this.silverIngotBuy, this.silverIngotCraft()]);
+                this.goldIngotCraftBase = () => 5 * this.goldOre + 2 * this.optimalSilver();
+                this.goldIngotCraftWithSandFlux = () => (this.goldIngotCraftBase() + this.sandFlux) / 1.15;
+                this.goldIngotCraftWithShelldustFlux = () => (this.goldIngotCraftBase() + this.shelldustFlux) / 1.40;
+                this.goldIngotCraftWithObsidianFlux = () => (this.goldIngotCraftBase() + this.obsidianFlux) / 1.65;
 
-                this.optimalSteel = () => Math.min(this.steelIngotBuy, this.steelIngotCraftWithSandFlux(), this.steelIngotCraftWithShelldustFlux(), this.steelIngotCraftWithObsidianFlux());
-                this.starmetalIngotCraftWithSandFlux = () => (this.optimalSteel() * 2 + this.optimalCharcoal() * 2 + this.starmetalOre * 6 + this.sandFlux) / 1.1;
-                this.starmetalIngotCraftWithShelldustFlux = () => (this.optimalSteel() * 2 + this.optimalCharcoal() * 2 + this.starmetalOre * 6 + this.shelldustFlux) / 1.15;
-                this.starmetalIngotCraftWithObsidianFlux = () => (this.optimalSteel() * 2 + this.optimalCharcoal() * 2 + this.starmetalOre * 6 +  this.obsidianFlux) / 1.4;
+                /* platinum calc */
+                this.optimalGold = () => safeMin([this.goldIngotBuy, this.goldIngotCraftWithSandFlux(), this.goldIngotCraftWithShelldustFlux(), this.goldIngotCraftWithObsidianFlux()]);
+                this.platinumIngotCraftBase = () => 6 * this.platinumOre + 2 * this.optimalGold();
+                this.platinumIngotCraftWithSandFlux = () => (this.platinumIngotCraftBase() + this.sandFlux) / 1.08;
+                this.platinumIngotCraftWithShelldustFlux = () => (this.platinumIngotCraftBase() + this.shelldustFlux) / 1.13;
+                this.platinumIngotCraftWithObsidianFlux = () => (this.platinumIngotCraftBase() +  this.obsidianFlux) / 1.38;
 
-                this.optimalStarmetal = () => Math.min(this.starmetalIngotBuy, this.starmetalIngotCraftWithSandFlux(), this.starmetalIngotCraftWithShelldustFlux(), this.starmetalIngotCraftWithObsidianFlux());
-                this.orichalcumIngotCraftWithSandFlux = () => (this.optimalStarmetal() * 2 + this.optimalCharcoal() * 2 + this.orichalcumOre * 8 + this.sandFlux) / 1.03;
-                this.orichalcumIngotCraftWithShelldustFlux = () => (this.optimalStarmetal() * 2 + this.optimalCharcoal() * 2 + this.orichalcumOre * 8 + this.shelldustFlux) / 1.08;
-                this.orichalcumIngotCraftWithObsidianFlux = () => (this.optimalStarmetal() * 2 + this.optimalCharcoal() * 2 + this.orichalcumOre * 8 +  this.obsidianFlux) / 1.13;
-
-                this.optimalOrichalcum = () => Math.min(this.orichalcumIngotBuy, this.orichalcumIngotCraftWithSandFlux(), this.orichalcumIngotCraftWithShelldustFlux(), this.orichalcumIngotCraftWithObsidianFlux());
+                /* orichalcum ore calc */
+                this.optimalStarmetal = () => safeMin([this.starmetalIngotBuy, this.starmetalIngotCraftWithSandFlux(), this.starmetalIngotCraftWithShelldustFlux(), this.starmetalIngotCraftWithObsidianFlux()]);
+                this.orichalcumIngotCraftBase = () => 8 * this.orichalcumOre + 2 * this.optimalStarmetal() + 2 * this.optimalCharcoal();
+                this.orichalcumIngotCraftWithSandFlux = () => (this.orichalcumIngotCraftBase() + this.sandFlux) / 1.03;
+                this.orichalcumIngotCraftWithShelldustFlux = () => (this.orichalcumIngotCraftBase() + this.shelldustFlux) / 1.08;
+                this.orichalcumIngotCraftWithObsidianFlux = () => (this.orichalcumIngotCraftBase() + this.obsidianFlux) / 1.13;
+                this.optimalPlatinum = () => safeMin([this.platinumIngotBuy, this.platinumIngotCraftWithSandFlux(), this.platinumIngotCraftWithShelldustFlux(), this.platinumIngotCraftWithObsidianFlux()]);
+                this.orichalcumIngotCraftBase2 = () => 8 * this.orichalcumOre + 3 * this.optimalPlatinum() + 2 * this.optimalCharcoal();
+                this.orichalcumIngotCraftWithSandFlux2 = () => (this.orichalcumIngotCraftBase2() + this.sandFlux) / 1.03;
+                this.orichalcumIngotCraftWithShelldustFlux2 = () => (this.orichalcumIngotCraftBase2() + this.shelldustFlux) / 1.08;
+                this.orichalcumIngotCraftWithObsidianFlux2 = () => (this.orichalcumIngotCraftBase2() +  this.obsidianFlux) / 1.13;
+                
+                /* asmodeum calc */
+                this.optimalOrichalcum = () => safeMin([
+                    this.orichalcumIngotBuy,
+                    this.orichalcumIngotCraftWithSandFlux(),
+                    this.orichalcumIngotCraftWithShelldustFlux(),
+                    this.orichalcumIngotCraftWithObsidianFlux(),
+                    this.orichalcumIngotCraftWithSandFlux2(),
+                    this.orichalcumIngotCraftWithShelldustFlux2(),
+                    this.orichalcumIngotCraftWithObsidianFlux2()
+                ]);
                 this.asmodeumCraft = () => this.optimalOrichalcum() * 5 + this.optimalCharcoal() * 2 + this.tolviumAndCinnabar + this.obsidianFlux;
             });
         </script>
     </head>
     <body ng-controller="CalculatorController as calculator">
-        <h1>cheb1n's asmodeum optimizer</h1>
-        <h2>background</h2>
-        <p>new world's material refinement duping chance creates an interesting decision space</p>
-        <ul>
-            <li>
-                is it cheaper to buy or craft this product?
-                <ul><li>if i'm crafting, which reagent will result in the highest quantity/price?</li></ul>
-            </li>
-        </ul>
-        <p>notably, chaining these decisions over several intermediate products can result in a spare bit of pocket change -- i once was able to craft orichalcum for 12 instead of buying for 17</p>
-        <p>this can help save money if a friend has recently scammed you*</p>
-        <h2>how to use</h2>
-        <p>fill in all the buy prices</p>
-        <p>as you do, the craftables will also have their craft prices populated using the cheapest possible craft price of the previous row</p>
-        <ol>
-            <li>to determine the cheapest method of obtaining a craftable, look at the cheapest price in the row (including buy price)</li>
-            <li>if the buy price is cheapest, just buy it. you are done</li>
-            <li>otherwise, if one of the crafted prices is the cheapest, craft it, using any listed reagents</li>
-            <li>if you are missing a craftable mat (e.g. iron ingot for steel), go back to step one to determine the cheapest method of obtaining the missing craftable mat</li>
-        </ol>
-        <table>
-            <tr>
-                <th>non-craftable</th>
-                <th>price</th>
-            </tr>
-            <tr>
-                <td>green wood</td>
-                <td><input type="number" ng-model="calculator.greenWood"></input></td>
-            </tr>
-            <tr>
-                <td>sand flux</td>
-                <td><input type="number" ng-model="calculator.sandFlux"></input></td>
-            </tr>
-            <tr>
-                <td>shelldust flux</td>
-                <td><input type="number" ng-model="calculator.shelldustFlux"></input></td>
-            </tr>
-            <tr>
-                <td>obsidian flux</td>
-                <td><input type="number" ng-model="calculator.obsidianFlux"></input></td>
-            </tr>
-            <tr>
-                <td>iron ore</td>
-                <td><input type="number" ng-model="calculator.ironOre"></input></td>
-            </tr>
-            <tr>
-                <td>starmetal ore</td>
-                <td><input type="number" ng-model="calculator.starmetalOre"></input></td>
-            </tr>
-            <tr>
-                <td>orichalcum ore</td>
-                <td><input type="number" ng-model="calculator.orichalcumOre"></input></td>
-            </tr>
-            <tr>
-                <td>tolvium & cinnabar</td>
-                <td><input type="number" ng-model="calculator.tolviumAndCinnabar"></input></td>
-            </tr>
-        </table>
+        <div class="container">
+            <h1>cheb1n's asmodeum optimizer <small>(now with platinum)</small></h1>
+            <h2>background</h2>
+            <p>new world's material refinement duping chance creates an interesting decision space</p>
+            <ul>
+                <li>
+                    is it cheaper to buy or craft this product?
+                    <ul><li>if i'm crafting, which reagent will result in the highest quantity/price?</li></ul>
+                </li>
+            </ul>
+            <p>notably, chaining these decisions over several intermediate products can result in a spare bit of pocket change -- i once was able to craft orichalcum for 12 instead of buying for 17</p>
+            <p>this can help save money if a friend has recently scammed you*</p>
+            <h2>how to use</h2>
+            <p>fill in all the buy prices</p>
+            <p>as you do, the craftables will also have their craft prices populated using the cheapest possible craft price of the previous row</p>
+            <ol>
+                <li>to determine the cheapest method of obtaining a craftable, look at the cheapest price in the row (including buy price)</li>
+                <li>if the buy price is cheapest, just buy it. you are done</li>
+                <li>otherwise, if one of the crafted prices is the cheapest, craft it, using any listed reagents</li>
+                <li>if you are missing a craftable mat (e.g. iron ingot for steel), go back to step one to determine the cheapest method of obtaining the missing craftable mat</li>
+            </ol>
+            <h2>tables</h2>
+            <table class="table table-condensed">
+                <tr>
+                    <th>non-craftable</th>
+                    <th>price</th>
+                </tr>
+                <tr>
+                    <td>green wood</td>
+                    <td><input type="number" ng-model="calculator.greenWood" required></input></td>
+                </tr>
+                <tr>
+                    <td>sand flux</td>
+                    <td><input type="number" ng-model="calculator.sandFlux" required></input></td>
+                </tr>
+                <tr>
+                    <td>shelldust flux</td>
+                    <td><input type="number" ng-model="calculator.shelldustFlux" required></input></td>
+                </tr>
+                <tr>
+                    <td>obsidian flux</td>
+                    <td><input type="number" ng-model="calculator.obsidianFlux" required></input></td>
+                </tr>
+                <tr>
+                    <td>iron ore</td>
+                    <td><input type="number" ng-model="calculator.ironOre" required></input></td>
+                </tr>
+                <tr>
+                    <td>starmetal ore</td>
+                    <td><input type="number" ng-model="calculator.starmetalOre" required></input></td>
+                </tr>
+                <tr>
+                    <td>silver ore</td>
+                    <td><input type="number" ng-model="calculator.silverOre" required></input></td>
+                </tr>
+                <tr>
+                    <td>gold ore</td>
+                    <td><input type="number" ng-model="calculator.goldOre" required></input></td>
+                </tr>
+                <tr>
+                    <td>platinum ore</td>
+                    <td><input type="number" ng-model="calculator.platinumOre" required></input></td>
+                </tr>
+                <tr>
+                    <td>orichalcum ore</td>
+                    <td><input type="number" ng-model="calculator.orichalcumOre" required></input></td>
+                </tr>
+                <tr>
+                    <td>tolvium & cinnabar</td>
+                    <td><input type="number" ng-model="calculator.tolviumAndCinnabar" required></input></td>
+                </tr>
+            </table>
 
-        <table>
-            <tr>
-                <th>craftable</th>
-                <th>buy price</th>
-                <th>craft price</th>
-                <th>craft w/ sand price</th>
-                <th>craft w/ shelldust price</th>
-                <th>craft w/ obsidian price</th>
-            </tr>
-            <tr>
-                <td>charcoal</td>
-                <td><input type="number" ng-model="calculator.charcoalBuy"></input></td>
-                <td>{{calculator.charcoalCraft() | number : 2}}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>iron ingot</td>
-                <td><input type="number" ng-model="calculator.ironIngotBuy"></td>
-                <td>{{calculator.ironIngotCraft() | number : 2}}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>steel ingot</td>
-                <td><input type="number" ng-model="calculator.steelIngotBuy"></td>
-                <td></td>
-                <td>{{calculator.steelIngotCraftWithSandFlux() | number : 2}}</td>
-                <td>{{calculator.steelIngotCraftWithShelldustFlux() | number : 2}}</td>
-                <td>{{calculator.steelIngotCraftWithObsidianFlux() | number : 2}}</td>
-            </tr>
-            <tr>
-                <td>starmetal ingot</td>
-                <td><input type="number" ng-model="calculator.starmetalIngotBuy"></td>
-                <td></td>
-                <td>{{calculator.starmetalIngotCraftWithSandFlux() | number : 2}}</td>
-                <td>{{calculator.starmetalIngotCraftWithShelldustFlux() | number : 2}}</td>
-                <td>{{calculator.starmetalIngotCraftWithObsidianFlux() | number : 2}}</td>
-            </tr>
-            <tr>
-                <td>orichalcum ingot</td>
-                <td><input type="number" ng-model="calculator.orichalcumIngotBuy"></td>
-                <td></td>
-                <td>{{calculator.orichalcumIngotCraftWithSandFlux() | number : 2 }}</td>
-                <td>{{calculator.orichalcumIngotCraftWithShelldustFlux() | number : 2}}</td>
-                <td>{{calculator.orichalcumIngotCraftWithObsidianFlux() | number : 2}}</td>
-            </tr>
-            <tr>
-                <td>asmodeum ingot</td>
-                <td><input type="number" ng-model="calculator.asmodeumIngotBuy"></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>{{calculator.asmodeumCraft() | number : 2}}</td>
-            </tr>
-        </table>
-        <h2>notes</h2>
-        <ul>
-            <li>only the default lv 200 dupe chances are used. no clothes or proficiency boosters</li>
-            <li>this won't work for the other refining skills because the crafting recipies have different ratios</li>
-            <li>from personal experience, i would advise against bulk-crafting and bulk-selling any craftables except asmo. if you spot high margins, it's probably due to low market liquidity and not high demand</li>
-            <li>*he did offer to pay me back but this is my favorite meme</li>
-        </ul>
+            <table class="table table-condensed">
+                <tr>
+                    <th>craftable</th>
+                    <th>buy price</th>
+                    <th>craft price</th>
+                </tr>
+                <tr>
+                    <td>charcoal</td>
+                    <td><input type="number" ng-model="calculator.charcoalBuy" required></input></td>
+                    <td>{{calculator.charcoalCraft() | number : 2}}</td>
+                </tr>
+            </table>
+
+            <table class="table table-condensed">
+                <tr>
+                    <th>craftable</th>
+                    <th>buy price</th>
+                    <th>craft price</th>
+                    <th>craft w/ sand price</th>
+                    <th>craft w/ shelldust price</th>
+                    <th>craft w/ obsidian price</th>
+                </tr>
+                <tr>
+                    <td>iron ingot</td>
+                    <td><input type="number" ng-model="calculator.ironIngotBuy" required></td>
+                    <td>{{calculator.ironIngotCraft() | number : 2}}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>steel ingot</td>
+                    <td><input type="number" ng-model="calculator.steelIngotBuy" required></td>
+                    <td></td>
+                    <td>{{calculator.steelIngotCraftWithSandFlux() | number : 2}}</td>
+                    <td>{{calculator.steelIngotCraftWithShelldustFlux() | number : 2}}</td>
+                    <td>{{calculator.steelIngotCraftWithObsidianFlux() | number : 2}}</td>
+                </tr>
+                <tr>
+                    <td>starmetal ingot</td>
+                    <td><input type="number" ng-model="calculator.starmetalIngotBuy" required></td>
+                    <td></td>
+                    <td>{{calculator.starmetalIngotCraftWithSandFlux() | number : 2}}</td>
+                    <td>{{calculator.starmetalIngotCraftWithShelldustFlux() | number : 2}}</td>
+                    <td>{{calculator.starmetalIngotCraftWithObsidianFlux() | number : 2}}</td>
+                </tr>
+                <tr>
+                    <td>orichalcum ingot</td>
+                    <td><input type="number" ng-model="calculator.orichalcumIngotBuy" required></td>
+                    <td></td>
+                    <td>{{calculator.orichalcumIngotCraftWithSandFlux() | number : 2 }}</td>
+                    <td>{{calculator.orichalcumIngotCraftWithShelldustFlux() | number : 2}}</td>
+                    <td>{{calculator.orichalcumIngotCraftWithObsidianFlux() | number : 2}}</td>
+                </tr>
+            </table>
+
+            <table class="table table-condensed">
+                <tr>
+                    <th>craftable</th>
+                    <th>buy price</th>
+                    <th>craft price</th>
+                    <th>craft w/ sand price</th>
+                    <th>craft w/ shelldust price</th>
+                    <th>craft w/ obsidian price</th>
+                </tr>
+                <tr>
+                    <td>silver ingot</td>
+                    <td><input type="number" ng-model="calculator.silverIngotBuy" required></td>
+                    <td>{{calculator.silverIngotCraft() | number : 2}}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>gold ingot</td>
+                    <td><input type="number" ng-model="calculator.goldIngotBuy" required></td>
+                    <td></td>
+                    <td>{{calculator.goldIngotCraftWithSandFlux() | number : 2}}</td>
+                    <td>{{calculator.goldIngotCraftWithShelldustFlux() | number : 2}}</td>
+                    <td>{{calculator.goldIngotCraftWithObsidianFlux() | number : 2}}</td>
+                </tr>
+                <tr>
+                    <td>platinum ingot</td>
+                    <td><input type="number" ng-model="calculator.platinumIngotBuy" required></td>
+                    <td></td>
+                    <td>{{calculator.platinumIngotCraftWithSandFlux() | number : 2}}</td>
+                    <td>{{calculator.platinumIngotCraftWithShelldustFlux() | number : 2}}</td>
+                    <td>{{calculator.platinumIngotCraftWithObsidianFlux() | number : 2}}</td>
+                </tr>
+                <tr>
+                    <td>orichalcum ingot</td>
+                    <td><input type="number" ng-model="calculator.orichalcumIngotBuy" required></td>
+                    <td></td>
+                    <td>{{calculator.orichalcumIngotCraftWithSandFlux2() | number : 2 }}</td>
+                    <td>{{calculator.orichalcumIngotCraftWithShelldustFlux2() | number : 2}}</td>
+                    <td>{{calculator.orichalcumIngotCraftWithObsidianFlux2() | number : 2}}</td>
+                </tr>
+            </table>
+
+            <p class="lead">Final Asmodeum Craft Cost: {{calculator.asmodeumCraft() | number : 2}}</p>
+                
+            <h2>notes</h2>
+            <ul>
+                <li>only the default lv 200 dupe chances are used. no clothes or proficiency boosters</li>
+                <li>this won't work for the other refining skills because the crafting recipies have different ratios</li>
+                <li>from personal experience, i would advise against bulk-crafting and bulk-selling any craftables except asmo. if you spot high margins, it's probably due to low market liquidity and not high demand</li>
+                <li>*he did offer to pay me back but this is my favorite meme</li>
+            </ul>
+        
+        </div>
     </body>
 </html>
